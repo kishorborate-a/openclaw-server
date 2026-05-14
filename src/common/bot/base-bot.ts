@@ -22,7 +22,7 @@ export abstract class BaseBot implements TelegramBot {
   ) {
     this.name = name
     this.agent = agent
-    this.bot = new Telegraf(token, { handlerTimeout: 300000 })
+    this.bot = new Telegraf(token, { handlerTimeout: 600000 })
     this.registerHandlers()
     this.bot.catch((err) => {
       console.error(`[${this.name}] unhandled error:`, err)
