@@ -1,0 +1,7 @@
+{
+  "host": "your-server-ip",
+  "username": "root",
+  "password": "your-password",
+  "remoteDir": "/opt/openclaw-server",
+  "port": "3000"
+}
