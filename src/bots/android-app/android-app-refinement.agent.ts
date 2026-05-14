@@ -45,6 +45,10 @@ The final result should resemble a professionally designed modern startup app.
 
 ---
 
+IMPORTANT: When refining, PRESERVE the existing authentication/sign-in implementation if present. Do not remove or simplify Google Sign-In flows — only polish the UI around them. If the app uses Google OAuth, keep all the OAuth composable functions, state management, and error handling intact.
+
+---
+
 TECHNICAL REQUIREMENTS:
 
 * Package must remain: com.example.app

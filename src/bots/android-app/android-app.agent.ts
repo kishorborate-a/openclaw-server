@@ -181,7 +181,7 @@ TECHNICAL REQUIREMENTS:
 * Package: com.example.app
 * Class name: MainActivity (must extend ComponentActivity and use setContent)
 * Use only Jetpack Compose with Material 3
-* Available dependencies: compose-bom:2024.02.00, core-ktx:1.12.0, lifecycle-runtime-ktx:2.7.0, activity-compose:1.8.2, navigation-compose:2.7.7, material-icons-extended
+* Available dependencies: compose-bom:2024.02.00, core-ktx:1.12.0, lifecycle-runtime-ktx:2.7.0, activity-compose:1.8.2, navigation-compose:2.7.7, material-icons-extended, browser:1.5.0
 * The app must compile with valid Kotlin syntax
 * Use @OptIn annotations where needed for experimental APIs
 * Import ALL necessary packages
