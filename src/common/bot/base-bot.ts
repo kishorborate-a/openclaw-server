@@ -11,6 +11,7 @@ export abstract class BaseBot implements TelegramBot {
   readonly name: string
   protected bot: Telegraf
   protected agent: Agent
+  private allowedUsernames: Set<string>
 
   constructor(
     name: string,
@@ -23,6 +24,14 @@ export abstract class BaseBot implements TelegramBot {
     this.name = name
     this.agent = agent
     this.bot = new Telegraf(token, { handlerTimeout: 600000 })
+
+    const raw = this.configService.get<string>(`ALLOWED_USERNAMES_${name.toUpperCase().replace(/-/g, '_')}`)
+      ?? this.configService.get<string>('ALLOWED_USERNAMES')
+      ?? ''
+    this.allowedUsernames = new Set(
+      raw.split(',').map((u) => u.trim().toLowerCase()).filter(Boolean),
+    )
+
     this.registerHandlers()
     this.bot.catch((err) => {
       console.error(`[${this.name}] unhandled error:`, err)
@@ -57,7 +66,21 @@ export abstract class BaseBot implements TelegramBot {
 
   protected abstract registerHandlers(): void
 
+  protected isAllowedUsername(username: string | undefined): boolean {
+    if (!username) return this.allowedUsernames.size === 0
+    return (
+      this.allowedUsernames.size === 0 ||
+      this.allowedUsernames.has(username.toLowerCase())
+    )
+  }
+
   protected async handleMessage(ctx: any) {
+    const username = ctx.from?.username
+    if (!this.isAllowedUsername(username)) {
+      await ctx.reply(`You are not authorized to use this bot.`).catch(() => {})
+      return
+    }
+
     const messageText = ctx.message?.text
     if (!messageText) return
 
