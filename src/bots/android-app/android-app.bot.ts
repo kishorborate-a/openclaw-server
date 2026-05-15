@@ -65,7 +65,9 @@ export class AndroidAppBot extends BaseBot {
         userId: ctx.from?.id,
       })
 
-      const refinedCode = extractKotlinCode(refinedResponse.text) ?? initialCode
+      const refinedCode = sanitizeKotlinCode(
+        extractKotlinCode(refinedResponse.text) ?? initialCode,
+      )
 
       await ctx.reply('Building APK, please wait (2-3 minutes)...')
 
@@ -122,4 +124,58 @@ function extractKotlinCode(text: string): string | null {
   }
 
   return null
+}
+
+function sanitizeKotlinCode(code: string): string {
+  const lines = code.split('\n')
+  const packageIdx = lines.findIndex((l) => /^package\s+/.test(l.trim()))
+  if (packageIdx === -1) return code
+
+  const importLines: { line: string; idx: number }[] = []
+  lines.forEach((l, i) => {
+    if (/^import\s+/.test(l.trim())) {
+      importLines.push({ line: l, idx: i })
+    }
+  })
+
+  for (const { idx } of importLines.slice().reverse()) {
+    lines.splice(idx, 1)
+  }
+
+  const pkgLine = packageIdx
+  let insertAt = pkgLine + 1
+  while (
+    insertAt < lines.length &&
+    lines[insertAt].trim() === ''
+  ) {
+    insertAt++
+  }
+  lines.splice(
+    insertAt,
+    0,
+    '',
+    ...importLines.map((i) => i.line),
+  )
+
+  let result = lines.join('\n')
+
+  if (
+    result.includes('isSystemInDarkTheme(') &&
+    !result.includes('import androidx.compose.foundation.isSystemInDarkTheme') &&
+    !result.includes('import androidx.compose.ui.platform.isSystemInDarkTheme')
+  ) {
+    const idx = result.indexOf('package ')
+    const nlIdx = result.indexOf('\n', idx)
+    const importInsert = result.slice(0, nlIdx + 1) +
+      'import androidx.compose.foundation.isSystemInDarkTheme\n' +
+      result.slice(nlIdx + 1)
+    result = importInsert
+  }
+
+  result = result.replace(
+    /val\s+Brush\.(\w+)\s*:\s*Brush\s*(get\s*\(\s*\)\s*)?=\s*/g,
+    'val $1: Brush = ',
+  )
+
+  return result
 }

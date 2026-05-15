@@ -184,7 +184,10 @@ TECHNICAL REQUIREMENTS:
 * Available dependencies: compose-bom:2024.02.00, core-ktx:1.12.0, lifecycle-runtime-ktx:2.7.0, activity-compose:1.8.2, navigation-compose:2.7.7, material-icons-extended, browser:1.5.0
 * The app must compile with valid Kotlin syntax
 * Use @OptIn annotations where needed for experimental APIs
-* Import ALL necessary packages
+* Import ALL necessary packages — ALL imports must be at the VERY TOP of the file, before any code, class, or function declarations
+* NEVER place import statements anywhere other than the top of the file
+* For dark theme support, you MUST use isSystemInDarkTheme() from androidx.compose.foundation.isSystemInDarkTheme and include the import at the top
+* If you define custom extension properties on Brush (e.g., horizontal gradients), make sure they are used on Brush receivers only
 * Generate the COMPLETE MainActivity.kt file
 
 OUTPUT FORMAT:

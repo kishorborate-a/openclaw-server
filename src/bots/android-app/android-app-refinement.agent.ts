@@ -56,7 +56,10 @@ TECHNICAL REQUIREMENTS:
 * Must use Jetpack Compose with Material 3
 * All screens must be included in a single MainActivity.kt file
 * The code must compile with valid Kotlin syntax
-* Import ALL necessary packages
+* Import ALL necessary packages — ALL imports must be at the VERY TOP of the file, before any code, class, or function declarations
+* NEVER place import statements anywhere other than the top of the file
+* For dark theme support, you MUST use isSystemInDarkTheme() from androidx.compose.foundation.isSystemInDarkTheme and include the import at the top
+* If you define custom extension properties on Brush (e.g., horizontal gradients), make sure they are used on Brush receivers only
 
 OUTPUT FORMAT:
 
