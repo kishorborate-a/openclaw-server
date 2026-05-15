@@ -51,7 +51,6 @@ IMPORTANT: When refining, PRESERVE the existing authentication/sign-in implement
 
 TECHNICAL REQUIREMENTS:
 
-* Package must remain: com.example.app
 * Class name must remain: MainActivity (extends ComponentActivity, uses setContent)
 * Must use Jetpack Compose with Material 3
 * All screens must be included in a single MainActivity.kt file
@@ -60,11 +59,12 @@ TECHNICAL REQUIREMENTS:
 * NEVER place import statements anywhere other than the top of the file
 * For dark theme support, you MUST use isSystemInDarkTheme() from androidx.compose.foundation.isSystemInDarkTheme and include the import at the top
 * If you define custom extension properties on Brush (e.g., horizontal gradients), make sure they are used on Brush receivers only
+* Use the app name and package provided in the user message
 
 OUTPUT FORMAT:
 
 * Output ONLY the improved Kotlin code — no explanations, no markdown, no backticks
-* Start directly with: package com.example.app
+* Start directly with: package as specified in the user message
 * The code must be complete, compilable, and ready to build`
 
   async handle(request: AgentRequest): Promise<AgentResponse> {

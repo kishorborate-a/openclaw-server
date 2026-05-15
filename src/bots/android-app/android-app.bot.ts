@@ -30,7 +30,8 @@ export class AndroidAppBot extends BaseBot {
   protected registerHandlers() {
     this.bot.start((ctx) =>
       ctx.reply(
-        'Welcome to the Android App Builder Bot! Describe your app idea and I will build it for you.',
+        'Welcome to the Android App Builder Bot!\n\nSend your app idea like:\n<code>Habit Tracker - I want an app where friends track habits together...</code>\n\nInclude a title before the dash or colon.',
+        { parse_mode: 'HTML' },
       ),
     )
     this.bot.on('text', (ctx) => this.handleAndroidBuild(ctx))
@@ -40,11 +41,27 @@ export class AndroidAppBot extends BaseBot {
     const messageText = ctx.message?.text
     if (!messageText) return
 
-    await ctx.reply('Analyzing your requirements and generating your app...')
+    const title = extractAppTitle(messageText)
+    if (!title) {
+      await ctx.reply(
+        'Please include an app title at the beginning of your message.\n\nExample:\n<code>Habit Tracker - I want an app where friends can track habits together...</code>\n\nThe title should come before a dash or colon.',
+        { parse_mode: 'HTML' },
+      )
+      return
+    }
+
+    const packageName = toPackageName(title)
+    const description = stripTitle(messageText)
+
+    await ctx.reply(
+      `Creating <b>${escapeHtml(title)}</b> (${packageName})...`,
+      { parse_mode: 'HTML' },
+    )
 
     try {
+      const genMessage = `App name: ${title}\nPackage: ${packageName}\n\nApp description:\n${description}`
       const response = await this.agentService.run(this.generationAgent, {
-        message: messageText,
+        message: genMessage,
         chatId: ctx.chat.id,
         userId: ctx.from?.id,
       })
@@ -60,13 +77,14 @@ export class AndroidAppBot extends BaseBot {
       await ctx.reply('Refining your app with premium design polish...')
 
       const refinedResponse = await this.agentService.run(this.refinementAgent, {
-        message: `Original request: ${messageText}\n\nGenerated code:\n${initialCode}`,
+        message: `App name: ${title}\nPackage: ${packageName}\n\nOriginal request: ${description}\n\nGenerated code:\n${initialCode}`,
         chatId: ctx.chat.id,
         userId: ctx.from?.id,
       })
 
       const refinedCode = sanitizeKotlinCode(
         extractKotlinCode(refinedResponse.text) ?? initialCode,
+        packageName,
       )
 
       await ctx.reply('Building APK, please wait (2-3 minutes)...')
@@ -74,7 +92,8 @@ export class AndroidAppBot extends BaseBot {
       const apkUrl = await this.buildApk(refinedCode)
 
       await ctx.reply(
-        `Your APK is ready!\n\nDownload: ${apkUrl}\n\nInstall it on your Android device to test.`,
+        `Your APK for <b>${escapeHtml(title)}</b> is ready!\n\nDownload: ${apkUrl}\n\nInstall it on your Android device to test.`,
+        { parse_mode: 'HTML' },
       )
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
@@ -106,6 +125,43 @@ export class AndroidAppBot extends BaseBot {
   }
 }
 
+function extractAppTitle(text: string): string | null {
+  const firstLine = text.trim().split('\n')[0]
+
+  const match = firstLine.match(/^(.+?)\s*[:—–\-]\s*/)
+  if (match) {
+    const title = match[1].trim()
+    if (title.length <= 60) return title
+  }
+
+  if (firstLine.length <= 60 && !firstLine.endsWith('.')) return firstLine
+
+  return null
+}
+
+function stripTitle(text: string): string {
+  const firstLine = text.trim().split('\n')[0]
+  const rest = text.trim().slice(firstLine.length).trim()
+  const match = firstLine.match(/^.+?\s*[:—–\-]\s*(.*)/)
+  if (match && match[1]) {
+    const after = match[1].trim()
+    return after + (rest ? '\n' + rest : '')
+  }
+  return rest || text
+}
+
+function toPackageName(title: string): string {
+  const slug = title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_|_$/g, '')
+  return `com.example.${slug || 'app'}`
+}
+
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+}
+
 function extractKotlinCode(text: string): string | null {
   const trimmed = text.trim()
 
@@ -126,7 +182,7 @@ function extractKotlinCode(text: string): string | null {
   return null
 }
 
-function sanitizeKotlinCode(code: string): string {
+function sanitizeKotlinCode(code: string, packageName?: string): string {
   const lines = code.split('\n')
   const packageIdx = lines.findIndex((l) => /^package\s+/.test(l.trim()))
   if (packageIdx === -1) return code
@@ -142,8 +198,7 @@ function sanitizeKotlinCode(code: string): string {
     lines.splice(idx, 1)
   }
 
-  const pkgLine = packageIdx
-  let insertAt = pkgLine + 1
+  let insertAt = packageIdx + 1
   while (
     insertAt < lines.length &&
     lines[insertAt].trim() === ''
@@ -159,6 +214,10 @@ function sanitizeKotlinCode(code: string): string {
 
   let result = lines.join('\n')
 
+  if (packageName) {
+    result = result.replace(/^package\s+[\w.]+/m, `package ${packageName}`)
+  }
+
   if (
     result.includes('isSystemInDarkTheme(') &&
     !result.includes('import androidx.compose.foundation.isSystemInDarkTheme') &&
@@ -166,10 +225,9 @@ function sanitizeKotlinCode(code: string): string {
   ) {
     const idx = result.indexOf('package ')
     const nlIdx = result.indexOf('\n', idx)
-    const importInsert = result.slice(0, nlIdx + 1) +
+    result = result.slice(0, nlIdx + 1) +
       'import androidx.compose.foundation.isSystemInDarkTheme\n' +
       result.slice(nlIdx + 1)
-    result = importInsert
   }
 
   result = result.replace(

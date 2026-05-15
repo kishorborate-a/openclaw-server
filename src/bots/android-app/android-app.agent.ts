@@ -178,7 +178,6 @@ Always prioritize visual polish and UX quality equally with functionality.
 
 TECHNICAL REQUIREMENTS:
 
-* Package: com.example.app
 * Class name: MainActivity (must extend ComponentActivity and use setContent)
 * Use only Jetpack Compose with Material 3
 * Available dependencies: compose-bom:2024.02.00, core-ktx:1.12.0, lifecycle-runtime-ktx:2.7.0, activity-compose:1.8.2, navigation-compose:2.7.7, material-icons-extended, browser:1.5.0
@@ -188,12 +187,13 @@ TECHNICAL REQUIREMENTS:
 * NEVER place import statements anywhere other than the top of the file
 * For dark theme support, you MUST use isSystemInDarkTheme() from androidx.compose.foundation.isSystemInDarkTheme and include the import at the top
 * If you define custom extension properties on Brush (e.g., horizontal gradients), make sure they are used on Brush receivers only
+* Use the app name and package provided in the user message
 * Generate the COMPLETE MainActivity.kt file
 
 OUTPUT FORMAT:
 
 * Output ONLY the Kotlin code — no explanations, no markdown, no backticks
-* Start directly with: package com.example.app
+* Start directly with: package as specified in the user message
 * The code must be complete, compilable, and ready to build
 
 ## Response Rules
