@@ -89,7 +89,7 @@ export class AndroidAppBot extends BaseBot {
 
       await ctx.reply('Building APK, please wait (2-3 minutes)...')
 
-      const apkUrl = await this.buildApk(refinedCode)
+      const apkUrl = await this.buildApk(refinedCode, packageName)
 
       await ctx.reply(
         `Your APK for <b>${escapeHtml(title)}</b> is ready!\n\nDownload: ${apkUrl}\n\nInstall it on your Android device to test.`,
@@ -104,7 +104,7 @@ export class AndroidAppBot extends BaseBot {
     }
   }
 
-  private async buildApk(code: string): Promise<string> {
+  private async buildApk(code: string, packageName?: string): Promise<string> {
     const buildUrl =
       this.configService.get<string>('FILESERVER_URL', 'http://79.143.189.251') +
       '/build-android'
@@ -112,7 +112,7 @@ export class AndroidAppBot extends BaseBot {
     const res = await fetch(buildUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code }),
+      body: JSON.stringify({ code, packageName }),
     })
 
     if (!res.ok) {
