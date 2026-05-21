@@ -9,6 +9,7 @@ import { AndroidAppModule } from './bots/android-app/android-app.module'
 import { SwingTradingModule } from './bots/swing-trading/swing-trading.module'
 import { GeoPoliticsModule } from './bots/geo-politics/geo-politics.module'
 import { RoastModule } from './bots/roast/roast.module'
+import { ConditionsModule } from './bots/conditions/conditions.module'
 
 @Global()
 @Module({
@@ -18,6 +19,7 @@ import { RoastModule } from './bots/roast/roast.module'
     SwingTradingModule,
     GeoPoliticsModule,
     RoastModule,
+    ConditionsModule,
   ],
   controllers: [WebhookController],
   providers: [BotRegistryService, AgentService, FileServerService, MarketDataService],
