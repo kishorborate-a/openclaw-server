@@ -65,8 +65,10 @@ export class ConditionsService implements OnModuleDestroy {
           message: `Current Market Data:\n${marketContext}\n\nCondition to evaluate: ${cond.description}\n\nIs this condition met? Answer YES or NO only.`,
           chatId: cond.chatId,
         })
-        const answer = response.text.trim().toUpperCase()
-        if (answer.startsWith('YES')) {
+        const raw = response.text.trim()
+        const cleaned = raw.replace(/\*\*/g, '').replace(/`/g, '').trim().toUpperCase()
+        console.log(`[Conditions] Condition #${cond.id} raw response: "${raw}"`)
+        if (/\bYES\b/.test(cleaned)) {
           console.log(`[Conditions] Condition #${cond.id} met: ${cond.description}`)
           await this.sendMessageFn(cond.chatId, `✅ Condition met!\n\n${cond.description}`)
           toRemove.push({ chatId: cond.chatId, id: cond.id })
