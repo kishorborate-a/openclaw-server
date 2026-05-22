@@ -10,6 +10,7 @@ import { SwingTradingModule } from './bots/swing-trading/swing-trading.module'
 import { GeoPoliticsModule } from './bots/geo-politics/geo-politics.module'
 import { RoastModule } from './bots/roast/roast.module'
 import { ConditionsModule } from './bots/conditions/conditions.module'
+import { ManifestationModule } from './bots/manifestation/manifestation.module'
 
 @Global()
 @Module({
@@ -20,6 +21,7 @@ import { ConditionsModule } from './bots/conditions/conditions.module'
     GeoPoliticsModule,
     RoastModule,
     ConditionsModule,
+    ManifestationModule,
   ],
   controllers: [WebhookController],
   providers: [BotRegistryService, AgentService, FileServerService, MarketDataService],
