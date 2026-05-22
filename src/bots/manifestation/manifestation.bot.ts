@@ -67,6 +67,7 @@ export class ManifestationBot extends BaseBot {
         ctx.reply('Set a goal first with /goal.')
         return
       }
+      ctx.reply('Let me channel the universe for you...')
       await this.manifestationService.sendManifestation(ctx.chat.id)
     })
 

@@ -61,11 +61,16 @@ export class ManifestationService {
       await this.sendMessageFn?.(chatId, 'Set a goal first with /goal.')
       return
     }
-    const response = await this.agentService.run(this.dailyAgent, {
-      message: `The user's manifestation goal is: ${goal.description}\n\nGenerate a natural, human-sounding manifestation reminder for them.`,
-      chatId,
-    })
-    await this.sendMessageFn?.(chatId, response.text)
+    try {
+      const response = await this.agentService.run(this.dailyAgent, {
+        message: `The user's manifestation goal is: ${goal.description}\n\nGenerate a natural, human-sounding manifestation reminder for them.`,
+        chatId,
+      })
+      await this.sendMessageFn?.(chatId, response.text)
+    } catch (err: any) {
+      console.error(`[Manifestation] AI error for ${chatId}:`, err.message)
+      await this.sendMessageFn?.(chatId, 'The universe needs a moment to recharge. Try /manifest again in a little while.')
+    }
   }
 
   setGoal(chatId: number, description: string): Goal {
