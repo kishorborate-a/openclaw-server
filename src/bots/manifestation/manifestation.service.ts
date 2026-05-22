@@ -21,46 +21,49 @@ export class ManifestationService implements OnModuleDestroy {
     this.sendMessageFn = fn
   }
 
+  private timers: ReturnType<typeof setInterval>[] = []
+
   startDailyReminders(): void {
-    if (this.timer) return
-    console.log('[Manifestation] Starting daily reminders every 24 hours')
+    if (this.timers.length > 0) return
+    console.log('[Manifestation] Scheduling daily reminders at 8am and 10pm')
+    this.scheduleAt(8, 'MORNING')
+    this.scheduleAt(22, 'NIGHT')
+  }
+
+  private scheduleAt(hour: number, label: string): void {
     const now = new Date()
-    const msUntil9am = (() => {
-      const next = new Date(now)
-      next.setHours(9, 0, 0, 0)
-      if (next <= now) next.setDate(next.getDate() + 1)
-      return next.getTime() - now.getTime()
-    })()
+    const next = new Date(now)
+    next.setHours(hour, 0, 0, 0)
+    if (next <= now) next.setDate(next.getDate() + 1)
+    const delay = next.getTime() - now.getTime()
     setTimeout(() => {
-      this.sendDailyReminders()
-      this.timer = setInterval(() => this.sendDailyReminders(), 24 * 60 * 60 * 1000)
-    }, msUntil9am)
+      this.sendReminders(label)
+      this.timers.push(setInterval(() => this.sendReminders(label), 24 * 60 * 60 * 1000))
+    }, delay)
   }
 
   stopDailyReminders(): void {
-    if (this.timer) {
-      clearInterval(this.timer)
-      this.timer = null
-    }
+    for (const t of this.timers) clearInterval(t)
+    this.timers = []
   }
 
   onModuleDestroy(): void {
     this.stopDailyReminders()
   }
 
-  private async sendDailyReminders(): Promise<void> {
+  private async sendReminders(label: string): Promise<void> {
     if (!this.sendMessageFn) return
     if (this.goals.size === 0) return
-    console.log(`[Manifestation] Sending daily reminders to ${this.goals.size} user(s)`)
+    console.log(`[Manifestation] Sending ${label} reminders to ${this.goals.size} user(s)`)
     for (const [chatId, goal] of this.goals) {
       try {
         const response = await this.agentService.run(this.dailyAgent, {
-          message: `The user's manifestation goal is: ${goal.description}\n\nGenerate a daily reminder for them.`,
+          message: `Time: ${label}\nThe user's manifestation goal is: ${goal.description}\n\nGenerate a natural, human-sounding ${label.toLowerCase()} reminder for them.`,
           chatId,
         })
-        await this.sendMessageFn(chatId, `🌟 Daily Manifestation Reminder 🌟\n\n${response.text}`)
+        await this.sendMessageFn(chatId, response.text)
       } catch (err) {
-        console.error(`[Manifestation] Error sending reminder to ${chatId}:`, err)
+        console.error(`[Manifestation] Error sending ${label} reminder to ${chatId}:`, err)
       }
     }
   }
