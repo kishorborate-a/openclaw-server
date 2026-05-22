@@ -19,16 +19,6 @@ export class ManifestationBot extends BaseBot {
     this.manifestationService.setSendMessageFn((chatId, text) => this.sendMessage(chatId, text))
   }
 
-  async start() {
-    await super.start()
-    this.manifestationService.startDailyReminders()
-  }
-
-  async stop() {
-    this.manifestationService.stopDailyReminders()
-    await super.stop()
-  }
-
   private async sendMessage(chatId: number, text: string): Promise<void> {
     await this.bot.telegram.sendMessage(chatId, text).catch((err) => {
       console.error(`[${this.name}] send error:`, err)
@@ -44,10 +34,8 @@ export class ManifestationBot extends BaseBot {
         'Commands:\n' +
         '/goal <your goal> - Set your manifestation goal\n' +
         '/mygoal - View your current goal\n' +
-        '/test - Get a sample morning reminder\n' +
-        '/delete - Delete your goal\n\n' +
-        'You will receive daily reminders with visualization, affirmations, ' +
-        'and actionable steps tailored to your goal.',
+        '/manifest - Get a manifestation reminder right now\n' +
+        '/delete - Delete your goal',
       ),
     )
 
@@ -60,8 +48,7 @@ export class ManifestationBot extends BaseBot {
       const goal = this.manifestationService.setGoal(ctx.chat.id, text)
       ctx.reply(
         `🎯 Goal set!\n\n"${goal.description}"\n\n` +
-        'You will receive daily manifestation reminders to help you align ' +
-        'with your desire. Trust the process and take inspired action!',
+        'Use /manifest anytime to get a reminder tailored to your goal.',
       )
     })
 
@@ -74,14 +61,13 @@ export class ManifestationBot extends BaseBot {
       ctx.reply(`🎯 Your current goal:\n\n"${goal.description}"`)
     })
 
-    this.bot.command('test', async (ctx) => {
+    this.bot.command('manifest', async (ctx) => {
       const goal = this.manifestationService.getGoal(ctx.chat.id)
       if (!goal) {
         ctx.reply('Set a goal first with /goal.')
         return
       }
-      ctx.reply('Sending a sample morning reminder...')
-      await this.manifestationService.sendSample(ctx.chat.id, 'MORNING')
+      await this.manifestationService.sendManifestation(ctx.chat.id)
     })
 
     this.bot.command('delete', (ctx) => {
