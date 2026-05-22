@@ -29,8 +29,8 @@ export class ConditionsService implements OnModuleDestroy {
 
   startChecking(): void {
     if (this.timer) return
-    console.log('[Conditions] Starting periodic check every 5 minutes')
-    this.timer = setInterval(() => this.checkConditions(), 5 * 60 * 1000)
+    console.log('[Conditions] Starting periodic check every 30 minutes')
+    this.timer = setInterval(() => this.checkConditions(), 30 * 60 * 1000)
     setTimeout(() => this.checkConditions(), 15_000)
   }
 
@@ -86,9 +86,15 @@ export class ConditionsService implements OnModuleDestroy {
     }
   }
 
-  add(chatId: number, description: string): Condition {
+  private readonly MAX_CONDITIONS = 3
+
+  add(chatId: number, description: string): Condition | null {
     if (!this.conditions.has(chatId)) {
       this.conditions.set(chatId, [])
+    }
+    const userConditions = this.conditions.get(chatId)!
+    if (userConditions.length >= this.MAX_CONDITIONS) {
+      return null
     }
     const condition: Condition = {
       id: this.nextId++,
@@ -96,7 +102,7 @@ export class ConditionsService implements OnModuleDestroy {
       chatId,
       createdAt: new Date(),
     }
-    this.conditions.get(chatId)!.push(condition)
+    userConditions.push(condition)
     return condition
   }
 

@@ -49,7 +49,7 @@ export class ConditionsBot extends BaseBot {
         '/add if SPY drops below 500\n' +
         '/add when NVDA goes above $1000\n' +
         '/add if AAPL drops 5% in a day\n\n' +
-        'Conditions are checked every 5 minutes.',
+        'Conditions are checked every 30 minutes.',
       ),
     )
 
@@ -60,6 +60,10 @@ export class ConditionsBot extends BaseBot {
         return
       }
       const condition = this.conditionsService.add(ctx.chat.id, text)
+      if (!condition) {
+        ctx.reply('❌ Max 3 conditions allowed. Delete one first with /delete.')
+        return
+      }
       ctx.reply(`✅ Condition #${condition.id} added:\n\n${text}`)
     })
 
