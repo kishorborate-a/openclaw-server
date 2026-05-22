@@ -46,6 +46,10 @@ export class ManifestationBot extends BaseBot {
         return
       }
       const goal = this.manifestationService.setGoal(ctx.chat.id, text)
+      if (!goal) {
+        ctx.reply('You already have a goal. Use /delete first to set a new one.')
+        return
+      }
       ctx.reply(
         `🎯 Goal set!\n\n"${goal.description}"\n\n` +
         'Use /manifest anytime to get a reminder tailored to your goal.',

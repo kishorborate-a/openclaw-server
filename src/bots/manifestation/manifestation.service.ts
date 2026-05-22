@@ -73,7 +73,8 @@ export class ManifestationService {
     }
   }
 
-  setGoal(chatId: number, description: string): Goal {
+  setGoal(chatId: number, description: string): Goal | null {
+    if (this.goals.has(chatId)) return null
     const goal: Goal = {
       description,
       chatId,
