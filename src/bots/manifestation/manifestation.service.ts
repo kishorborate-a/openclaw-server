@@ -1,27 +1,60 @@
 import { Injectable, OnModuleDestroy } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
+import * as fs from 'fs'
+import * as path from 'path'
 import { AgentService } from '../../common/agent/agent.service'
 import { ManifestationDailyAgent } from './manifestation.agent'
 
 interface Goal {
   description: string
   chatId: number
-  createdAt: Date
+  createdAt: string
 }
 
 @Injectable()
 export class ManifestationService implements OnModuleDestroy {
   private goals = new Map<number, Goal>()
-  private timer: ReturnType<typeof setInterval> | null = null
   private dailyAgent = new ManifestationDailyAgent()
   private sendMessageFn: ((chatId: number, text: string) => Promise<void>) | null = null
+  private timers: ReturnType<typeof setInterval>[] = []
+  private dataPath: string
 
-  constructor(private agentService: AgentService) {}
+  constructor(
+    private agentService: AgentService,
+    private configService: ConfigService,
+  ) {
+    this.dataPath = this.configService.get<string>(
+      'MANIFESTATION_DATA_PATH',
+      path.join(process.cwd(), 'data', 'manifestation-goals.json'),
+    )
+    this.loadGoals()
+  }
 
   setSendMessageFn(fn: (chatId: number, text: string) => Promise<void>): void {
     this.sendMessageFn = fn
   }
 
-  private timers: ReturnType<typeof setInterval>[] = []
+  private loadGoals(): void {
+    try {
+      if (!fs.existsSync(this.dataPath)) return
+      const raw = fs.readFileSync(this.dataPath, 'utf-8')
+      const data: [number, Goal][] = JSON.parse(raw)
+      this.goals = new Map(data)
+      console.log(`[Manifestation] Loaded ${this.goals.size} goal(s) from disk`)
+    } catch (err) {
+      console.error('[Manifestation] Error loading goals:', err)
+    }
+  }
+
+  private saveGoals(): void {
+    try {
+      const dir = path.dirname(this.dataPath)
+      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
+      fs.writeFileSync(this.dataPath, JSON.stringify([...this.goals]), 'utf-8')
+    } catch (err) {
+      console.error('[Manifestation] Error saving goals:', err)
+    }
+  }
 
   startDailyReminders(): void {
     if (this.timers.length > 0) return
@@ -85,9 +118,10 @@ export class ManifestationService implements OnModuleDestroy {
     const goal: Goal = {
       description,
       chatId,
-      createdAt: new Date(),
+      createdAt: new Date().toISOString(),
     }
     this.goals.set(chatId, goal)
+    this.saveGoals()
     return goal
   }
 
@@ -96,6 +130,8 @@ export class ManifestationService implements OnModuleDestroy {
   }
 
   deleteGoal(chatId: number): boolean {
-    return this.goals.delete(chatId)
+    const removed = this.goals.delete(chatId)
+    if (removed) this.saveGoals()
+    return removed
   }
 }
