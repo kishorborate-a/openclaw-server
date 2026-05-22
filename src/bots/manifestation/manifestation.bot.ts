@@ -44,6 +44,7 @@ export class ManifestationBot extends BaseBot {
         'Commands:\n' +
         '/goal <your goal> - Set your manifestation goal\n' +
         '/mygoal - View your current goal\n' +
+        '/test - Get a sample morning reminder\n' +
         '/delete - Delete your goal\n\n' +
         'You will receive daily reminders with visualization, affirmations, ' +
         'and actionable steps tailored to your goal.',
@@ -71,6 +72,16 @@ export class ManifestationBot extends BaseBot {
         return
       }
       ctx.reply(`🎯 Your current goal:\n\n"${goal.description}"`)
+    })
+
+    this.bot.command('test', async (ctx) => {
+      const goal = this.manifestationService.getGoal(ctx.chat.id)
+      if (!goal) {
+        ctx.reply('Set a goal first with /goal.')
+        return
+      }
+      ctx.reply('Sending a sample morning reminder...')
+      await this.manifestationService.sendSample(ctx.chat.id, 'MORNING')
     })
 
     this.bot.command('delete', (ctx) => {

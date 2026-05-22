@@ -51,6 +51,19 @@ export class ManifestationService implements OnModuleDestroy {
     this.stopDailyReminders()
   }
 
+  async sendSample(chatId: number, label: string): Promise<void> {
+    const goal = this.goals.get(chatId)
+    if (!goal) {
+      await this.sendMessageFn?.(chatId, 'Set a goal first with /goal.')
+      return
+    }
+    const response = await this.agentService.run(this.dailyAgent, {
+      message: `Time: ${label}\nThe user's manifestation goal is: ${goal.description}\n\nGenerate a natural, human-sounding ${label.toLowerCase()} reminder for them.`,
+      chatId,
+    })
+    await this.sendMessageFn?.(chatId, response.text)
+  }
+
   private async sendReminders(label: string): Promise<void> {
     if (!this.sendMessageFn) return
     if (this.goals.size === 0) return
